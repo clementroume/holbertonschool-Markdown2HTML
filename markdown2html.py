@@ -29,8 +29,10 @@ def main():
         # Exit with an error code 1
         sys.exit(1)
 
+    # If all checks pass, the script exits successfully
     sys.exit(0)
 
 
 if __name__ == "__main__":
+    # Execute the main function when the script is run directly
     main()
