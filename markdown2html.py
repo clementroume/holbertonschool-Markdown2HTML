@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+"""Markdown to HTML"""
 
 import os
 import sys
