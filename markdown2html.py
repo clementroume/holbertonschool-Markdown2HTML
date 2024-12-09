@@ -18,21 +18,41 @@ def process_markdown(input_file, output_file):
     Reads a Markdown file, processes its content, and writes the HTML output.
     """
     try:
+        unordered_start = False  # Tracks if a <ul> is open
+
         with open(input_file, 'r') as read, open(output_file, 'w') as html:
             for line in read:
-                # Strip leading hashes to calculate heading level
                 stripped_line = line.lstrip('#')
                 heading_level = len(line) - len(stripped_line)
 
-                # Convert headings to HTML tags if valid
-                if 1 <= heading_level <= 6:
+                stripped_unordered = line.lstrip('-')
+                unordered_num = len(line) - len(stripped_unordered)
+
+                if 1 <= heading_level <= 6:  # Handle headings
+                    if unordered_start:
+                        html.write('</ul>\n')
+                        unordered_start = False
                     html.write('<h{}>{}</h{}>\n'.format(
                         heading_level,
                         stripped_line.strip(),
                         heading_level
                     ))
-                elif line.strip():  # Handle non-empty lines without headings
+                elif unordered_num:  # Handle unordered lists
+                    if not unordered_start:
+                        html.write('<ul>\n')
+                        unordered_start = True
+                    html.write('<li>{}</li>\n'
+                               .format(stripped_unordered.strip()))
+                elif line.strip():  # Handle paragraphs
+                    if unordered_start:
+                        html.write('</ul>\n')
+                        unordered_start = False
                     html.write('<p>{}</p>\n'.format(line.strip()))
+
+            # Close any open <ul> at the end of the file
+            if unordered_start:
+                html.write('</ul>\n')
+
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
