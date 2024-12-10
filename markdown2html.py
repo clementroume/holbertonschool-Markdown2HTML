@@ -20,21 +20,20 @@ def process_markdown(input_file, output_file):
     try:
         unordered_start = False
         ordered_start = False
+        previous_line_was_paragraph = False
 
         with open(input_file, 'r') as read, open(output_file, 'w') as html:
             for line in read:
-                # Handle headings
-                stripped_line = line.lstrip('#')
-                heading_level = len(line) - len(stripped_line)
-
-                # Handle unordered lists
+                stripped_line = line.strip()  # Strip leading/trailing spaces
                 stripped_unordered = line.lstrip('-')
-                unordered_num = len(line) - len(stripped_unordered)
-
-                # Handle ordered lists
                 stripped_ordered = line.lstrip('*')
+                stripped_heading = line.lstrip('#')
+
+                heading_level = len(line) - len(stripped_heading)
+                unordered_num = len(line) - len(stripped_unordered)
                 ordered_num = len(line) - len(stripped_ordered)
 
+                # Handle headings
                 if 1 <= heading_level <= 6:
                     # Close any open list before writing a heading
                     if unordered_start:
@@ -43,32 +42,37 @@ def process_markdown(input_file, output_file):
                     if ordered_start:
                         html.write('</ol>\n')
                         ordered_start = False
-
                     # Write heading
                     html.write('<h{}>{}</h{}>\n'.format(
                         heading_level,
-                        stripped_line.strip(),
+                        stripped_heading.strip(),
                         heading_level
                     ))
+                    previous_line_was_paragraph = False
+
+                # Handle unordered lists
                 elif unordered_num:
                     # Start unordered list if not already started
                     if not unordered_start:
                         html.write('<ul>\n')
                         unordered_start = True
-
                     # Write list item
                     html.write('<li>{}</li>\n'
                                .format(stripped_unordered.strip()))
+                    previous_line_was_paragraph = False
+
+                # Handle ordered lists
                 elif ordered_num:
                     # Start ordered list if not already started
                     if not ordered_start:
                         html.write('<ol>\n')
                         ordered_start = True
-
                     # Write list item
                     html.write('<li>{}</li>\n'
                                .format(stripped_ordered.strip()))
-                elif line.strip():
+                    previous_line_was_paragraph = False
+
+                elif stripped_line:
                     # Close any open list before writing a paragraph
                     if unordered_start:
                         html.write('</ul>\n')
@@ -76,9 +80,14 @@ def process_markdown(input_file, output_file):
                     if ordered_start:
                         html.write('</ol>\n')
                         ordered_start = False
-
+                    if previous_line_was_paragraph:
+                        # Add <br> if the previous line was also a paragraph
+                        html.write('<br/>\n')
                     # Write paragraph
-                    html.write('<p>{}</p>\n'.format(line.strip()))
+                    html.write('<p>{}</p>\n'.format(stripped_line))
+                    previous_line_was_paragraph = True
+                else:  # Handle empty lines
+                    previous_line_was_paragraph = False
 
             # Close any remaining open lists
             if unordered_start:
