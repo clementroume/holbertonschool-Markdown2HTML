@@ -30,9 +30,37 @@ def remove_c(text):
     return re.sub(r'(?i)c', '', text)
 
 
+def apply_bold(text):
+    """
+    Converts **text** to <b>text</b>.
+    """
+    return re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+
+
+def apply_emphasis(text):
+    """
+    Converts __text__ to <em>text</em>.
+    """
+    return re.sub(r'__(.*?)__', r'<em>\1</em>', text)
+
+
+def apply_md5_hash(text):
+    """
+    Converts [[text]] to its MD5 hash.
+    """
+    return re.sub(r'\[\[(.*?)\]\]', lambda m: md5_hash(m.group(1)), text)
+
+
+def apply_remove_c(text):
+    """
+    Removes all occurrences of 'c' (case-insensitive) from ((text)).
+    """
+    return re.sub(r'\(\((.*?)\)\)', lambda m: remove_c(m.group(1)), text)
+
+
 def apply_text_formatting(text):
     """
-    Apply bold (**text**) and emphasis (__text__) formatting to text.
+    Apply all Markdown to HTML transformations.
 
     Args:
         text (str): Input text with Markdown formatting.
@@ -40,11 +68,10 @@ def apply_text_formatting(text):
     Returns:
         str: Text with HTML formatting applied.
     """
-    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    text = re.sub(r'__(.*?)__', r'<em>\1</em>', text)
-    text = re.sub(r'\[\[(.*?)\]\]', lambda m: md5_hash(m.group(1)), text)
-    text = re.sub(r'\(\((.*?)\)\)', lambda m: remove_c(m.group(1)), text)
-
+    text = apply_bold(text)
+    text = apply_emphasis(text)
+    text = apply_md5_hash(text)
+    text = apply_remove_c(text)
     return text
 
 
