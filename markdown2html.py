@@ -20,11 +20,11 @@ def process_markdown(input_file, output_file):
     try:
         unordered_start = False
         ordered_start = False
-        previous_line_was_paragraph = False
+        paragraph_lines = []
 
         with open(input_file, 'r') as read, open(output_file, 'w') as html:
             for line in read:
-                stripped_line = line.strip()  # Strip leading/trailing spaces
+                stripped_line = line.strip()
                 stripped_unordered = line.lstrip('-')
                 stripped_ordered = line.lstrip('*')
                 stripped_heading = line.lstrip('#')
@@ -35,65 +35,70 @@ def process_markdown(input_file, output_file):
 
                 # Handle headings
                 if 1 <= heading_level <= 6:
-                    # Close any open list before writing a heading
                     if unordered_start:
                         html.write('</ul>\n')
                         unordered_start = False
                     if ordered_start:
                         html.write('</ol>\n')
                         ordered_start = False
-                    # Write heading
+                    if paragraph_lines:
+                        html.write('<p>{}</p>\n'
+                                   .format('<br/>'.join(paragraph_lines)))
+                        paragraph_lines = []
                     html.write('<h{}>{}</h{}>\n'.format(
                         heading_level,
                         stripped_heading.strip(),
                         heading_level
                     ))
-                    previous_line_was_paragraph = False
 
                 # Handle unordered lists
                 elif unordered_num:
-                    # Start unordered list if not already started
                     if not unordered_start:
                         html.write('<ul>\n')
                         unordered_start = True
-                    # Write list item
+                    if paragraph_lines:
+                        html.write('<p>{}</p>\n'
+                                   .format('<br/>'.join(paragraph_lines)))
+                        paragraph_lines = []
                     html.write('<li>{}</li>\n'
                                .format(stripped_unordered.strip()))
-                    previous_line_was_paragraph = False
 
                 # Handle ordered lists
                 elif ordered_num:
-                    # Start ordered list if not already started
                     if not ordered_start:
                         html.write('<ol>\n')
                         ordered_start = True
-                    # Write list item
+                    if paragraph_lines:
+                        html.write('<p>{}</p>\n'
+                                   .format('<br/>'.join(paragraph_lines)))
+                        paragraph_lines = []
                     html.write('<li>{}</li>\n'
                                .format(stripped_ordered.strip()))
-                    previous_line_was_paragraph = False
 
+                # Handle paragraph lines
                 elif stripped_line:
-                    # Close any open list before writing a paragraph
                     if unordered_start:
                         html.write('</ul>\n')
                         unordered_start = False
                     if ordered_start:
                         html.write('</ol>\n')
                         ordered_start = False
-                    if previous_line_was_paragraph:
-                        # Add <br> if the previous line was also a paragraph
-                        html.write('<br/>\n')
-                    # Write paragraph
-                    html.write('<p>{}</p>\n'.format(stripped_line))
-                    previous_line_was_paragraph = True
-                else:  # Handle empty lines
-                    previous_line_was_paragraph = False
+                    paragraph_lines.append(stripped_line)
 
-            # Close any remaining open lists
+                # Handle empty lines (end of a paragraph)
+                else:
+                    if paragraph_lines:
+                        html.write('<p>{}</p>\n'
+                                   .format('<br/>'.join(paragraph_lines)))
+                        paragraph_lines = []
+
+            # Close any remaining open tags
             if unordered_start:
                 html.write('</ul>\n')
             if ordered_start:
                 html.write('</ol>\n')
+            if paragraph_lines:
+                html.write('<p>{}</p>\n'.format('<br/>'.join(paragraph_lines)))
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
