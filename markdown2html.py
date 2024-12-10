@@ -11,7 +11,23 @@ Usage: ./markdown2html.py README.md README.html
 
 import os
 import sys
+import hashlib
 import re
+
+
+def md5_hash(text):
+    """
+    Converts the given text to its MD5 hash (lowercase).
+    """
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
+
+
+def remove_c(text):
+    """
+    Removes all occurrences of the letter 'c'
+    (case-insensitive) from the given text.
+    """
+    return re.sub(r'(?i)c', '', text)
 
 
 def apply_text_formatting(text):
@@ -26,6 +42,9 @@ def apply_text_formatting(text):
     """
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
     text = re.sub(r'__(.*?)__', r'<em>\1</em>', text)
+    text = re.sub(r'\[\[(.*?)\]\]', lambda m: md5_hash(m.group(1)), text)
+    text = re.sub(r'\(\((.*?)\)\)', lambda m: remove_c(m.group(1)), text)
+
     return text
 
 
