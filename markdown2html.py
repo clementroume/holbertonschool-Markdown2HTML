@@ -3,14 +3,28 @@
 Markdown to HTML converter.
 
 This script validates input arguments for converting a Markdown file
-to an HTML file. It processes Markdown headings (#, ##, etc.)
-and converts them to corresponding HTML heading tags (<h1>, <h2>, etc.).
+to an HTML file. It processes:
+- Markdown headings (#, ##, etc.) to HTML heading tags (<h1>, <h2>, etc.).
+- Unordered (-) and ordered (*) lists to <ul> and <ol> tags.
+- Bold (**text**) to <b> and emphasis (__text__) to <em>.
 
 Usage: ./markdown2html.py README.md README.html
 """
 
-import os  # For file and path-related operations
-import sys  # For interacting with the command-line arguments and system
+import os
+import sys
+import re
+
+
+def convert_inline_styles(line):
+    """
+    Converts bold and emphasized Markdown syntax to HTML.
+    """
+    # Convert bold (**) to <b>
+    line = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', line)
+    # Convert emphasized (__) to <em>
+    line = re.sub(r'__(.+?)__', r'<em>\1</em>', line)
+    return line
 
 
 def process_markdown(input_file, output_file):
@@ -47,7 +61,7 @@ def process_markdown(input_file, output_file):
                         paragraph_lines = []
                     html.write('<h{}>{}</h{}>\n'.format(
                         heading_level,
-                        stripped_heading.strip(),
+                        convert_inline_styles(stripped_heading.strip()),
                         heading_level
                     ))
 
@@ -60,8 +74,9 @@ def process_markdown(input_file, output_file):
                         html.write('<p>{}</p>\n'
                                    .format('<br/>'.join(paragraph_lines)))
                         paragraph_lines = []
-                    html.write('<li>{}</li>\n'
-                               .format(stripped_unordered.strip()))
+                    html.write('<li>{}</li>\n'.format(
+                        convert_inline_styles(stripped_unordered.strip())
+                    ))
 
                 # Handle ordered lists
                 elif ordered_num:
@@ -72,8 +87,9 @@ def process_markdown(input_file, output_file):
                         html.write('<p>{}</p>\n'
                                    .format('<br/>'.join(paragraph_lines)))
                         paragraph_lines = []
-                    html.write('<li>{}</li>\n'
-                               .format(stripped_ordered.strip()))
+                    html.write('<li>{}</li>\n'.format(
+                        convert_inline_styles(stripped_ordered.strip())
+                    ))
 
                 # Handle paragraph lines
                 elif stripped_line:
@@ -83,7 +99,8 @@ def process_markdown(input_file, output_file):
                     if ordered_start:
                         html.write('</ol>\n')
                         ordered_start = False
-                    paragraph_lines.append(stripped_line)
+                    paragraph_lines.append(
+                        convert_inline_styles(stripped_line))
 
                 # Handle empty lines (end of a paragraph)
                 else:
