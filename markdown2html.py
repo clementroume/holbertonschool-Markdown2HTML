@@ -18,40 +18,73 @@ def process_markdown(input_file, output_file):
     Reads a Markdown file, processes its content, and writes the HTML output.
     """
     try:
-        unordered_start = False  # Tracks if a <ul> is open
+        unordered_start = False
+        ordered_start = False
 
         with open(input_file, 'r') as read, open(output_file, 'w') as html:
             for line in read:
+                # Handle headings
                 stripped_line = line.lstrip('#')
                 heading_level = len(line) - len(stripped_line)
 
+                # Handle unordered lists
                 stripped_unordered = line.lstrip('-')
                 unordered_num = len(line) - len(stripped_unordered)
 
-                if 1 <= heading_level <= 6:  # Handle headings
+                # Handle ordered lists
+                stripped_ordered = line.lstrip('*')
+                ordered_num = len(line) - len(stripped_ordered)
+
+                if 1 <= heading_level <= 6:
+                    # Close any open list before writing a heading
                     if unordered_start:
                         html.write('</ul>\n')
                         unordered_start = False
+                    if ordered_start:
+                        html.write('</ol>\n')
+                        ordered_start = False
+
+                    # Write heading
                     html.write('<h{}>{}</h{}>\n'.format(
                         heading_level,
                         stripped_line.strip(),
                         heading_level
                     ))
-                elif unordered_num:  # Handle unordered lists
+                elif unordered_num:
+                    # Start unordered list if not already started
                     if not unordered_start:
                         html.write('<ul>\n')
                         unordered_start = True
+
+                    # Write list item
                     html.write('<li>{}</li>\n'
                                .format(stripped_unordered.strip()))
-                elif line.strip():  # Handle paragraphs
+                elif ordered_num:
+                    # Start ordered list if not already started
+                    if not ordered_start:
+                        html.write('<ol>\n')
+                        ordered_start = True
+
+                    # Write list item
+                    html.write('<li>{}</li>\n'
+                               .format(stripped_ordered.strip()))
+                elif line.strip():
+                    # Close any open list before writing a paragraph
                     if unordered_start:
                         html.write('</ul>\n')
                         unordered_start = False
+                    if ordered_start:
+                        html.write('</ol>\n')
+                        ordered_start = False
+
+                    # Write paragraph
                     html.write('<p>{}</p>\n'.format(line.strip()))
 
-            # Close any open <ul> at the end of the file
+            # Close any remaining open lists
             if unordered_start:
                 html.write('</ul>\n')
+            if ordered_start:
+                html.write('</ol>\n')
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
