@@ -1,11 +1,10 @@
 # My title
-
-- He__l__lo
+- He**l**lo
 - Bye
 
 Hello
 
-I'm __a__ text
+I'm **a** text
 with __2 lines__
 
-__Or in bold__
+**Or in bold**
